@@ -1,0 +1,83 @@
+# ============================================================
+# CS饰品指数分析工具 - 配置文件
+# 说明：所有敏感信息请勿直接提交到版本控制系统
+# ============================================================
+
+# ---- CSQAQ API 配置 ----
+api:
+  base_url: "https://api.csqaq.com"
+  api_token: "XMXQF1P7C7I3Z0I7Q3P294Z7"
+  timeout: 30          # 请求超时时间(秒)
+  retry_times: 3       # 失败重试次数
+  retry_delay: 2       # 重试间隔(秒)
+
+  # 接口端点（如接口地址变更，在此修改）
+  endpoints:
+    # 获取首页相关数据（包含所有子指数概览）
+    current_data: "/api/v1/current_data"
+    # 获取指数详情数据（时间序列）
+    sub_data: "/api/v1/sub_data"
+    # 获取指数K线图
+    sub_kline: "/api/v1/sub/kline"
+
+  # K线周期配置
+  kline_types:
+    - key: "1day"
+      label: "日线"
+    - key: "1week"
+      label: "周线"
+    - key: "1month"
+      label: "月线"
+
+# ---- 企业微信推送配置 ----
+wecom:
+  webhook_url: "https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=bf9ac8db-99fe-4249-857a-3179f6eb01fb"
+  # 推送消息类型: markdown / text
+  msg_type: "markdown"
+  # 图片压缩质量 (1-100)，数值越小文件越小
+  image_quality: 85
+  # 单次推送最大图片大小(bytes)，超过则压缩
+  max_image_size: 2097152  # 2MB
+
+# ---- UI 配置 ----
+ui:
+  window_title: "CS饰品指数分析工具"
+  window_width: 1200
+  window_height: 800
+  theme: "default"     # default / dark
+  refresh_interval: 60 # 自动刷新间隔(秒)，0为不自动刷新
+  chart_style:
+    # K线颜色
+    candle_up: "#EF4444"     # 涨 - 红色
+    candle_down: "#22C55E"   # 跌 - 绿色
+    bg_color: "#FFFFFF"
+    grid_color: "#E5E7EB"
+    ma_colors: ["#F59E0B", "#3B82F6", "#8B5CF6"]  # MA5/MA10/MA20 线颜色
+    volume_color_up: "rgba(239,68,68,0.5)"
+    volume_color_down: "rgba(34,197,94,0.5)"
+
+# ---- 日志配置 ----
+logging:
+  level: "INFO"          # DEBUG / INFO / WARNING / ERROR
+  file: "logs/app.log"   # 日志文件路径
+  max_size: 10485760     # 单个日志文件最大 10MB
+  backup_count: 5        # 保留日志文件数量
+  format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+
+# ---- 数据缓存配置 ----
+cache:
+  enabled: true
+  ttl: 300               # 缓存有效期(秒)
+  dir: "cache"           # 缓存目录
+
+# ---- 推送策略配置 ----
+push_strategy:
+  # 仅在涨跌幅超过阈值时推送（设为0则总是推送）
+  alert_threshold: 0.0
+  # 推送时附带的K线天数
+  kline_days: 30
+  # 是否在推送中包含MA均线
+  include_ma: true
+  # 推送包含的指数列表（空列表=全部推送）
+  # 可按name_key指定: init, lease, main_weapon, agent, no_painted, covert_weapon, thousand_weapon, wk
+  target_indices: []
