@@ -280,6 +280,47 @@ class MainWindow(QMainWindow):
         # 初始化画布占位
         self.kline_canvas.clear_chart()
 
+
+
+
+    def bind_ip(self):
+        """绑定当前IP到白名单"""
+        reply = QMessageBox.question(
+            self, "确认绑定IP",
+            "是否将当前IP地址绑定到CSQAQ账号的白名单？\n\n"
+            "绑定后，您可以使用当前IP地址访问API而无需再次验证。",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if reply != QMessageBox.Yes:
+            return
+        
+        self.lbl_status.setText("正在绑定IP...")
+        
+        # 使用后台线程执行绑定操作
+        self._bind_thread = FetchDataThread(self.client, "bind_ip")
+        self._bind_thread.finished.connect(self._on_bind_finished)
+        self._bind_thread.error.connect(self._on_bind_error)
+        self._bind_thread.start()
+
+    def _on_bind_finished(self, result: Dict[str, Any]):
+        """IP绑定完成回调"""
+        code = result.get("code", -1)
+        msg = result.get("msg", "未知错误")
+        
+        if code == 200:
+            self.lbl_status.setText("IP绑定成功")
+            QMessageBox.information(self, "绑定成功", "IP已成功绑定到白名单")
+        else:
+            self.lbl_status.setText(f"IP绑定失败: {msg}")
+            QMessageBox.warning(self, "绑定失败", f"IP绑定失败:\n{msg}")
+
+    def _on_bind_error(self, error_msg: str):
+        """IP绑定错误回调"""
+        self.lbl_status.setText("IP绑定失败")
+        QMessageBox.critical(self, "绑定失败", f"绑定IP过程中发生错误:\n{error_msg}")
+
+
     def _init_toolbar(self):
         """初始化工具栏"""
         toolbar = self.addToolBar("主工具栏")
@@ -322,6 +363,13 @@ class MainWindow(QMainWindow):
         interval = self.config.get("ui", {}).get("refresh_interval", 60)
         self.act_auto_refresh.triggered.connect(self.toggle_auto_refresh)
         toolbar.addAction(self.act_auto_refresh)
+
+        # 绑定IP按钮
+        self.act_bind_ip = QAction("绑定IP", self)
+        self.act_bind_ip.setStatusTip("绑定当前IP到白名单")
+        self.act_bind_ip.triggered.connect(self.bind_ip)
+        toolbar.addAction(self.act_bind_ip)
+
 
     def _init_statusbar(self):
         """初始化状态栏"""

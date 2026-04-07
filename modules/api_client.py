@@ -101,6 +101,48 @@ class CSQAQClient:
 
         cache_key = f"current_data_{index_type or 'all'}"
         return self._request("GET", "/api/v1/current_data", params=params, cache_key=cache_key)
+    
+    def bind_ip(self) -> Dict[str, Any]:
+        """
+        绑定当前IP到CSQAQ账号的白名单
+        
+        API: POST /api/v1/sys/bind_local_ip
+        
+        Returns:
+            响应JSON，结构:
+            {
+            "code": 200,
+            "msg": "IP绑定成功",
+            "data": null
+            }
+        """
+        url = f"{self.base_url}/api/v1/sys/bind_local_ip"
+        
+        try:
+            response = requests.post(
+                url,
+                headers=self._headers,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            data = response.json()
+            
+            if data.get("code") != 200:
+                logger.warning("IP绑定失败 [code=%s]: %s", data.get("code"), data.get("msg", ""))
+                return data
+                
+            logger.info("IP绑定成功")
+            return data
+            
+        except requests.exceptions.HTTPError as e:
+            logger.error("IP绑定HTTP错误: %s", e)
+            return {"code": response.status_code, "msg": str(e), "data": None}
+        except Exception as e:
+            logger.error("IP绑定异常: %s", e)
+            return {"code": -1, "msg": f"IP绑定异常: {e}", "data": None}
+
+
+
 
     def get_sub_data(self, sub_id: int, data_type: str = "daily") -> Dict[str, Any]:
         """
