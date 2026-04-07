@@ -6,7 +6,7 @@
 # ---- CSQAQ API 配置 ----
 api:
   base_url: "https://api.csqaq.com"
-  api_token: "XMXQF1P7C7I3Z0I7Q3P294Z7"
+  api_token: "your own csqaq api"
   timeout: 30          # 请求超时时间(秒)
   retry_times: 3       # 失败重试次数
   retry_delay: 2       # 重试间隔(秒)
