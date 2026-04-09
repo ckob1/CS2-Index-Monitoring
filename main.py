@@ -71,7 +71,13 @@ def setup_logging(log_config: Dict[str, Any]):
         fh.setFormatter(formatter)
         handlers.append(fh)
 
-    logging.basicConfig(level=level, handlers=handlers, force=True)
+    # 避免重复添加handler
+    if not logging.getLogger().handlers:
+        logging.basicConfig(level=level, handlers=handlers)
+    else:
+        for handler in handlers:
+            logging.getLogger().addHandler(handler)
+            logging.getLogger().setLevel(level)
 
 
 def load_config(config_path: str) -> Dict[str, Any]:
@@ -206,12 +212,15 @@ def run_push_mode(config: Dict[str, Any], only_name_key: str = None):
 
 def run_gui_mode(config: Dict[str, Any]):
     """启动GUI界面"""
+    from PyQt5.QtCore import Qt
     from PyQt5.QtWidgets import QApplication
     from modules.ui_main import MainWindow
 
-    # 高DPI支持
-    QApplication.setAttribute(Qt.ApplicationAttribute.AA_EnableHighDpiScaling, True)
-    QApplication.setAttribute(Qt.ApplicationAttribute.AA_UseHighDpiPixmaps, True)
+    # 高DPI支持 - 使用环境变量方式（PyQt5 5.6+推荐）
+    os.environ.setdefault("QT_AUTO_SCREEN_SCALE_FACTOR", "1")
+    os.environ.setdefault("QT_ENABLE_HIGHDPI_SCALING", "1")
+    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
 
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
@@ -243,7 +252,7 @@ def run_gui_mode(config: Dict[str, Any]):
     window = MainWindow(config, client, processor, drawer, pusher)
     window.show()
 
-    sys.exit(app.exec_())
+    sys.exit(app.exec())
 
 
 # ============================================================

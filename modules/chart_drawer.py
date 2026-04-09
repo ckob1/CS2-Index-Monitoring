@@ -120,15 +120,30 @@ class ChartDrawer:
             ma_periods = [5, 10, 20]
 
         if df.empty:
-            logger.warning("K线数据为空，无法绑制")
+            logger.warning("K线数据为空，无法绘制")
             return self._generate_empty_chart(title)
 
-        # 按需截取
-        plot_df = df.tail(tail_days) if tail_days else df.copy()
-
-        # 计算MA均线
-        for period in ma_periods:
-            plot_df[f"MA{period}"] = plot_df["close"].rolling(window=period).mean()
+        # 性能优化：如果指定了tail_days，先截取数据再计算MA
+        if tail_days:
+            # 为了计算MA，需要比tail_days更多的数据（最大MA周期）
+            max_ma_period = max(ma_periods) if ma_periods else 20
+            # 获取足够的数据来计算MA
+            required_data = df.tail(tail_days + max_ma_period)
+            plot_df = required_data.copy()
+            
+            # 在截取的数据上计算MA
+            for period in ma_periods:
+                # 使用 min_periods=1 确保即使数据不足也能计算部分值
+                plot_df[f"MA{period}"] = plot_df["close"].rolling(window=period, min_periods=1).mean()
+            
+            # 只保留最后tail_days的数据用于显示
+            plot_df = plot_df.tail(tail_days)
+        else:
+            # 显示全部数据，使用完整数据计算MA
+            plot_df = df.copy()
+            for period in ma_periods:
+                # 使用 min_periods=1 确保即使数据不足也能计算部分值
+                plot_df[f"MA{period}"] = plot_df["close"].rolling(window=period, min_periods=1).mean()
 
         # 准备附加线
         add_plots = []
@@ -179,11 +194,11 @@ class ChartDrawer:
             plt.close(mc)
             buf.seek(0)
 
-            logger.info("K线图绑制完成: %s (%d条数据)", title, len(plot_df))
+            logger.info("K线图绘制完成: %s (%d条数据)", title, len(plot_df))
             return buf.getvalue()
 
         except Exception as e:
-            logger.error("K线图绑制失败: %s", e, exc_info=True)
+            logger.error("K线图绘制失败: %s", e, exc_info=True)
             return self._generate_empty_chart(title)
 
     def draw_kline_to_file(self, df: pd.DataFrame, filepath: str,
